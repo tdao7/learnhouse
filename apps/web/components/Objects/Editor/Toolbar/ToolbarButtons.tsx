@@ -44,7 +44,7 @@ import lrnaiIcon from 'public/lrnai_icon.png'
 import { useOrg } from '@components/Contexts/OrgContext'
 import { useTranslation } from 'react-i18next'
 
-export const ToolbarButtons = React.memo(({ editor, props }: any) => {
+export const ToolbarButtons = React.memo(function ToolbarButtons({ editor }: any) {
   const { t } = useTranslation()
   const [showTableMenu, setShowTableMenu] = React.useState(false)
   const [showListMenu, setShowListMenu] = React.useState(false)
@@ -123,7 +123,6 @@ export const ToolbarButtons = React.memo(({ editor, props }: any) => {
     const { from, to } = editor.state.selection
 
     if (editor.isActive('link')) {
-      const currentLink = editor.getAttributes('link')
       setShowLinkInput(true)
     } else {
       setShowLinkInput(true)
@@ -462,6 +461,25 @@ export const ToolbarButtons = React.memo(({ editor, props }: any) => {
             >
               <span className="icon"><Code size={15} weight="fill" /></span>
               <span className="label">Basic</span>
+            </div>
+            <div
+              onClick={() => {
+                editor.chain().focus().insertContent({
+                  type: 'codeBlock',
+                  attrs: { language: 'mermaid' },
+                  content: [
+                    {
+                      type: 'text',
+                      text: 'graph TD\n  A[Start] --> B[Mermaid diagram]',
+                    },
+                  ],
+                }).run()
+                setShowCodeMenu(false)
+              }}
+              className="editor-menu-item"
+            >
+              <span className="icon"><GitBranch size={15} weight="fill" /></span>
+              <span className="label">Mermaid</span>
             </div>
             <div
               onClick={() => {

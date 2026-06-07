@@ -1,6 +1,5 @@
 import {
   AlertCircle,
-  AlertTriangle,
   BadgeHelp,
   Code,
   CodeSquare,
@@ -162,6 +161,26 @@ export const slashCommands: SlashCommandItem[] = [
     keywords: ['code', 'snippet', 'programming', 'syntax'],
     command: (editor) => {
       editor.chain().focus().toggleCodeBlock().run()
+    },
+  },
+  {
+    id: 'mermaid',
+    title: 'Mermaid Diagram',
+    description: 'Flowchart or diagram from Mermaid syntax',
+    icon: <GitBranch size={18} />,
+    category: 'text',
+    keywords: ['mermaid', 'diagram', 'flowchart', 'chart'],
+    command: (editor) => {
+      editor.chain().focus().insertContent({
+        type: 'codeBlock',
+        attrs: { language: 'mermaid' },
+        content: [
+          {
+            type: 'text',
+            text: 'graph TD\n  A[Start] --> B[Mermaid diagram]',
+          },
+        ],
+      }).run()
     },
   },
 

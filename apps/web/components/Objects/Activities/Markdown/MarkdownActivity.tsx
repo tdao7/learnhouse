@@ -9,6 +9,7 @@ import { updateActivity } from '@services/courses/activities'
 import { useLHSession } from '@components/Contexts/LHSessionContext'
 import toast from 'react-hot-toast'
 import 'github-markdown-css/github-markdown-light.css'
+import MermaidDiagram from '@components/Objects/Markdown/MermaidDiagram'
 
 function toRawUrl(url: string): string {
   // GitHub: github.com/user/repo/blob/branch/path -> raw.githubusercontent.com/user/repo/branch/path
@@ -149,7 +150,20 @@ function MarkdownActivity({ activity, editable = false, style }: MarkdownActivit
       )}
 
       <div className="markdown-body" style={style ? { backgroundColor: 'transparent', color: 'inherit' } : undefined}>
-        <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw, rehypeHighlight]}>
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeRaw, rehypeHighlight]}
+          components={{
+            code: ({ className, children, ...props }) => {
+              const language = /language-(\w+)/.exec(className || '')?.[1]
+              if (language === 'mermaid') {
+                return <MermaidDiagram chart={String(children)} />
+              }
+
+              return <code className={className} {...props}>{children}</code>
+            },
+          }}
+        >
           {markdown || ''}
         </ReactMarkdown>
       </div>

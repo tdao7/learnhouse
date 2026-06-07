@@ -1,6 +1,5 @@
 import { useAssignments } from '@components/Contexts/Assignments/AssignmentContext';
 import { useAssignmentSubmission, useAssignmentTaskSubmissions } from '@components/Contexts/Assignments/AssignmentSubmissionContext';
-import { useCourse } from '@components/Contexts/CourseContext';
 import { useOrg } from '@components/Contexts/OrgContext';
 import { getTaskRefFileDir } from '@services/media/media';
 import TaskFileObject from 'app/orgs/[orgslug]/dash/assignments/[assignmentuuid]/_components/TaskEditor/Subs/TaskTypes/TaskFileObject';
@@ -10,15 +9,59 @@ import TaskCodeObject from 'app/orgs/[orgslug]/dash/assignments/[assignmentuuid]
 import TaskShortAnswerObject from 'app/orgs/[orgslug]/dash/assignments/[assignmentuuid]/_components/TaskEditor/Subs/TaskTypes/TaskShortAnswerObject'
 import TaskNumberAnswerObject from 'app/orgs/[orgslug]/dash/assignments/[assignmentuuid]/_components/TaskEditor/Subs/TaskTypes/TaskNumberAnswerObject'
 import toast from 'react-hot-toast';
-import { Backpack, Calendar, CheckCircle2, Download, EllipsisVertical, Info, MessageSquare, RotateCcw, XCircle } from 'lucide-react';
+import { Backpack, BookOpen, Calendar, CheckCircle2, Download, EllipsisVertical, FileText, Info, ListChecks, LogIn, MessageSquare, RotateCcw, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import React, { useEffect } from 'react'
 import { useTranslation } from 'react-i18next';
 
+type TaskDescriptionSection = {
+  key: 'requirement' | 'input' | 'output' | 'example' | 'overview'
+  title: string
+  icon: React.ReactNode
+  content: string
+}
+
+function cleanTaskText(value: string) {
+  return value
+    .replace(/^[\s:•◆♦-]+/, '')
+    .replace(/[\s◆♦]+$/g, '')
+    .trim()
+}
+
+function parseTaskDescription(description: string): TaskDescriptionSection[] {
+  const labelMap: Record<string, Omit<TaskDescriptionSection, 'content'>> = {
+    'YÊU CẦU': { key: 'requirement', title: 'Yêu cầu', icon: <ListChecks size={15} /> },
+    'YEU CAU': { key: 'requirement', title: 'Yêu cầu', icon: <ListChecks size={15} /> },
+    'VÀO': { key: 'input', title: 'Đầu vào', icon: <LogIn size={15} /> },
+    'VAO': { key: 'input', title: 'Đầu vào', icon: <LogIn size={15} /> },
+    'RA': { key: 'output', title: 'Đầu ra', icon: <FileText size={15} /> },
+    'VÍ DỤ': { key: 'example', title: 'Ví dụ', icon: <BookOpen size={15} /> },
+    'VI DU': { key: 'example', title: 'Ví dụ', icon: <BookOpen size={15} /> },
+  }
+
+  const pattern = /\[(YÊU CẦU|YEU CAU|VÀO|VAO|RA|VÍ DỤ|VI DU)\]\s*:?/gi
+  const matches = [...description.matchAll(pattern)]
+
+  if (matches.length === 0) {
+    return [{ key: 'overview', title: 'Đề bài', icon: <Info size={15} />, content: cleanTaskText(description) }]
+  }
+
+  return matches.map((match, index) => {
+    const label = match[1].toUpperCase()
+    const nextMatch = matches[index + 1]
+    const start = (match.index || 0) + match[0].length
+    const end = nextMatch?.index ?? description.length
+    const meta = labelMap[label]
+    return {
+      ...meta,
+      content: cleanTaskText(description.slice(start, end)),
+    }
+  }).filter((section) => section.content.length > 0)
+}
+
 function AssignmentStudentActivity() {
   const { t } = useTranslation()
   const assignments = useAssignments() as any;
-  const course = useCourse() as any;
   const org = useOrg() as any;
   const submission = useAssignmentSubmission() as any;
   const taskSubmissionsMap = useAssignmentTaskSubmissions() as Record<string, any> | null;
@@ -113,43 +156,74 @@ function AssignmentStudentActivity() {
         const taskPercentage = taskMax > 0 ? Math.round((taskGrade / taskMax) * 100) : 0;
         const taskPassed = taskPercentage >= passingThreshold;
 
+        const descriptionSections = parseTaskDescription(task.description || '')
+
         return (
-          <div className='flex flex-col space-y-2' key={task.assignment_task_uuid}>
-            <div className='flex flex-col md:flex-row md:justify-between py-2 space-y-2 md:space-y-0'>
-              <div className='flex flex-wrap space-x-2 font-semibold text-slate-800'>
-                <p>{t('assignments.task')} {index + 1} : </p>
-                <p className='text-slate-500 break-words'>{task.description}</p>
-              </div>
-              <div className='flex flex-wrap gap-2'>
-                <div
-                  onClick={() => toast(task.hint, { icon: 'ℹ️' })}
-                  className='px-3 py-1 flex items-center nice-shadow bg-amber-50/40 text-amber-900 rounded-full space-x-2 cursor-pointer'>
-                  <Info size={13} />
-                  <p className='text-xs font-semibold'>{t('assignments.hint')}</p>
-                </div>
-                <Link
-                  href={getTaskRefFileDir(
-                    org?.org_uuid,
-                    assignments?.course_object.course_uuid,
-                    assignments?.activity_object.activity_uuid,
-                    assignments?.assignment_object.assignment_uuid,
-                    task.assignment_task_uuid,
-                    task.reference_file
-                  )}
-                  target='_blank'
-                  download={true}
-                  className='px-3 py-1 flex items-center nice-shadow bg-cyan-50/40 text-cyan-900 rounded-full space-x-1 md:space-x-2 cursor-pointer'>
-                  <Download size={13} />
-                  <div className='flex items-center space-x-1 md:space-x-2'>
-                    {task.reference_file && (
-                      <span className='relative'>
-                        <span className='absolute right-0 top-0 block h-2 w-2 rounded-full ring-2 ring-white bg-green-400'></span>
-                      </span>
-                    )}
-                    <p className='text-xs font-semibold'>{t('assignments.reference_document')}</p>
+          <div className='flex flex-col space-y-3' key={task.assignment_task_uuid}>
+            <div className='rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-5'>
+              <div className='flex flex-col gap-3 md:flex-row md:items-start md:justify-between'>
+                <div className='flex items-center gap-3'>
+                  <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-slate-950 text-sm font-black text-white shadow-sm'>
+                    {index + 1}
                   </div>
-                </Link>
+                  <div>
+                    <p className='text-xs font-bold uppercase tracking-[0.16em] text-slate-400'>{t('assignments.task')} {index + 1}</p>
+                    <h3 className='mt-0.5 text-base font-bold text-slate-900'>Bài tập lập trình</h3>
+                  </div>
+                </div>
+                <div className='flex flex-wrap gap-2 md:justify-end'>
+                  {task.hint && (
+                    <button
+                      type='button'
+                      onClick={() => toast(task.hint, { icon: 'ℹ️' })}
+                      className='inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-800 transition hover:bg-amber-100'>
+                      <Info size={13} />
+                      {t('assignments.hint')}
+                    </button>
+                  )}
+                  {task.reference_file && (
+                    <Link
+                      href={getTaskRefFileDir(
+                        org?.org_uuid,
+                        assignments?.course_object.course_uuid,
+                        assignments?.activity_object.activity_uuid,
+                        assignments?.assignment_object.assignment_uuid,
+                        task.assignment_task_uuid,
+                        task.reference_file
+                      )}
+                      target='_blank'
+                      download={true}
+                      className='inline-flex items-center gap-1.5 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1.5 text-xs font-bold text-cyan-800 transition hover:bg-cyan-100'>
+                      <Download size={13} />
+                      {t('assignments.reference_document')}
+                    </Link>
+                  )}
+                </div>
               </div>
+
+              {descriptionSections.length > 0 && (
+                <div className='mt-4 grid gap-3 md:grid-cols-2'>
+                  {descriptionSections.map((section) => (
+                    <div
+                      key={section.key}
+                      className={`rounded-xl border p-3.5 ${section.key === 'requirement' || section.key === 'overview'
+                        ? 'border-slate-200 bg-slate-50 md:col-span-2'
+                        : section.key === 'example'
+                          ? 'border-violet-100 bg-violet-50/60 md:col-span-2'
+                          : 'border-slate-200 bg-white'
+                      }`}
+                    >
+                      <div className='mb-2 flex items-center gap-2 text-slate-900'>
+                        <span className='flex h-7 w-7 items-center justify-center rounded-lg bg-white text-slate-500 shadow-sm'>
+                          {section.icon}
+                        </span>
+                        <p className='text-sm font-bold'>{section.title}</p>
+                      </div>
+                      <p className='whitespace-pre-wrap text-sm font-medium leading-relaxed text-slate-600'>{section.content}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             {isGraded && taskSubmission && (
               <div className={`relative overflow-hidden rounded-xl nice-shadow border ${

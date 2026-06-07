@@ -395,6 +395,127 @@ function TaskQuizObject({ view, assignmentTaskUUID, user_id }: TaskQuizObjectPro
         }
     }, [assignmentTaskState, assignment, assignmentTaskStateHook, access_token, taskSubmissionsMap]);
 
+    if (view === 'student' && questions && questions.length >= 0) {
+        const selectedCount = questions.reduce((total, question) => {
+            return total + question.options.filter((option) => userSubmissions.submissions.some(
+                (submission) =>
+                    submission.questionUUID === question.questionUUID &&
+                    submission.optionUUID === option.optionUUID &&
+                    submission.answer
+            )).length
+        }, 0)
+        const totalCorrectOptions = questions.reduce((total, question) => total + question.options.filter((option) => option.assigned_right_answer).length, 0)
+
+        return (
+            <AssignmentBoxUI submitFC={submitFC} saveFC={saveFC} gradeFC={gradeFC} gradeCustomFC={gradeCustomFC} view={view} currentPoints={userSubmissionObject?.grade} currentFeedback={userSubmissionObject?.task_submission_grade_feedback} maxPoints={assignmentTaskOutsideProvider?.max_grade_value} showSavingDisclaimer={showSavingDisclaimer} type="quiz" autoGradable={true}>
+                <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                    <div className="flex flex-col gap-3 border-b border-slate-200 bg-slate-50 px-4 py-4 md:flex-row md:items-center md:justify-between">
+                        <div>
+                            <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">Trắc nghiệm</p>
+                            <h3 className="mt-1 text-base font-bold text-slate-900">Chọn đáp án đúng cho từng câu hỏi</h3>
+                            <p className="mt-1 text-sm text-slate-500">Một số câu có thể có nhiều đáp án đúng. Chọn tất cả đáp án phù hợp trước khi lưu.</p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            <span className="rounded-full bg-slate-950 px-3 py-1.5 text-xs font-bold text-white">{questions.length} câu hỏi</span>
+                            <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">{selectedCount} đã chọn</span>
+                            {showCorrectAnswers && (
+                                <span className="rounded-full bg-cyan-50 px-3 py-1.5 text-xs font-bold text-cyan-700">{totalCorrectOptions} đáp án đúng</span>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="space-y-4 p-4 md:p-5">
+                        {questions.map((question, qIndex) => {
+                            const selectedForQuestion = question.options.filter((option) => userSubmissions.submissions.some(
+                                (submission) =>
+                                    submission.questionUUID === question.questionUUID &&
+                                    submission.optionUUID === option.optionUUID &&
+                                    submission.answer
+                            )).length
+                            const correctForQuestion = question.options.filter((option) => option.assigned_right_answer).length
+
+                            return (
+                                <div key={question.questionUUID || qIndex} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                                        <div className="flex gap-3">
+                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-950 text-sm font-black text-white">{qIndex + 1}</div>
+                                            <div>
+                                                <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">Câu {qIndex + 1}</p>
+                                                <p className="mt-1 text-[15px] font-bold leading-relaxed text-slate-900">{question.questionText}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex shrink-0 gap-2 md:justify-end">
+                                            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600">{selectedForQuestion} chọn</span>
+                                            {showCorrectAnswers && (
+                                                <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700">{correctForQuestion} đúng</span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-4 grid gap-2">
+                                        {question.options.map((option, oIndex) => {
+                                            const selected = userSubmissions.submissions.some(
+                                                (submission) =>
+                                                    submission.questionUUID === question.questionUUID &&
+                                                    submission.optionUUID === option.optionUUID &&
+                                                    submission.answer
+                                            )
+                                            const showCorrect = showCorrectAnswers && option.assigned_right_answer
+                                            const showIncorrectSelection = showCorrectAnswers && selected && !option.assigned_right_answer
+
+                                            return (
+                                                <button
+                                                    key={option.optionUUID || oIndex}
+                                                    type="button"
+                                                    onClick={() => !submissionIsGraded && chooseOption(qIndex, oIndex)}
+                                                    disabled={submissionIsGraded}
+                                                    className={`group flex w-full items-stretch overflow-hidden rounded-xl border text-left transition ${
+                                                        showCorrect
+                                                            ? 'border-emerald-300 bg-emerald-50'
+                                                            : showIncorrectSelection
+                                                                ? 'border-rose-300 bg-rose-50'
+                                                                : selected
+                                                                    ? 'border-slate-900 bg-slate-50 shadow-sm'
+                                                                    : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
+                                                    } ${submissionIsGraded ? 'cursor-default' : 'cursor-pointer'}`}
+                                                >
+                                                    <div className={`flex w-12 shrink-0 items-center justify-center border-r text-sm font-black ${
+                                                        showCorrect
+                                                            ? 'border-emerald-200 bg-emerald-100 text-emerald-700'
+                                                            : showIncorrectSelection
+                                                                ? 'border-rose-200 bg-rose-100 text-rose-700'
+                                                                : selected
+                                                                    ? 'border-slate-900 bg-slate-950 text-white'
+                                                                    : 'border-slate-200 bg-slate-50 text-slate-700 group-hover:bg-slate-100'
+                                                    }`}>
+                                                        {String.fromCharCode(65 + oIndex)}
+                                                    </div>
+                                                    <div className="flex min-w-0 flex-1 items-center justify-between gap-3 px-4 py-3">
+                                                        <p className="text-sm font-semibold leading-relaxed text-slate-700">{option.text}</p>
+                                                        <div className="flex shrink-0 items-center gap-2">
+                                                            {showCorrectAnswers && (
+                                                                <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${option.assigned_right_answer ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                                                                    {option.assigned_right_answer ? t('assignments.quiz.correct_answer') : t('assignments.quiz.incorrect_answer')}
+                                                                </span>
+                                                            )}
+                                                            <span className={`flex h-6 w-6 items-center justify-center rounded-full border ${selected ? 'border-slate-900 bg-slate-950 text-white' : 'border-slate-300 bg-white text-slate-300'}`}>
+                                                                {selected ? <Check size={13} /> : null}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </button>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </div>
+                </div>
+            </AssignmentBoxUI>
+        )
+    }
+
     if (questions && questions.length >= 0) {
         return (
             <AssignmentBoxUI submitFC={submitFC} saveFC={saveFC} gradeFC={gradeFC} gradeCustomFC={gradeCustomFC} view={view} currentPoints={userSubmissionObject?.grade} currentFeedback={userSubmissionObject?.task_submission_grade_feedback} maxPoints={assignmentTaskOutsideProvider?.max_grade_value} showSavingDisclaimer={showSavingDisclaimer} type="quiz" autoGradable={true}>

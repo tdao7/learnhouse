@@ -501,9 +501,6 @@ const CodePlaygroundComponent: React.FC = (props: any) => {
   // Student custom test cases
   const [studentTestCases, setStudentTestCases] = useState<TestCase[]>([])
 
-  // Feature 17: Copy output
-  const outputCopy = useCopyToClipboard()
-
   // Load CodeMirror extensions
   useEffect(() => {
     const lang = getLanguageById(languageId)
@@ -959,6 +956,9 @@ const CodePlaygroundComponent: React.FC = (props: any) => {
     : 'bg-neutral-500'
 
   const diff = DIFFICULTY_CONFIG[difficulty]
+  const scorePercent = totalCount > 0 ? Math.round((passedCount / totalCount) * 100) : 0
+  const hasRun = results !== null
+  const learnerRunDisabled = isRunning || !accessToken || (timedMode && challengeExpired)
 
   const tabs: { id: RightTab; label: string; icon: React.ReactNode; badge?: React.ReactNode }[] = [
     { id: 'description', label: 'Description', icon: <FileText size={13} /> },
@@ -1642,6 +1642,212 @@ const CodePlaygroundComponent: React.FC = (props: any) => {
         )}
 
       </div>
+    )
+  }
+
+  if (!isEditable) {
+    return (
+      <NodeViewWrapper className="block-code-playground">
+        <div
+          ref={containerRef}
+          className="relative overflow-hidden rounded-[28px] border border-slate-200 bg-slate-950 shadow-[0_24px_80px_rgba(15,23,42,0.18)]"
+        >
+          {showConfetti && (
+            <ReactConfetti
+              width={containerSize.width}
+              height={containerSize.height}
+              numberOfPieces={showConfetti ? 1400 : 0}
+              recycle={false}
+              style={{ position: 'absolute', top: 0, left: 0, zIndex: 50, pointerEvents: 'none' }}
+            />
+          )}
+
+          {timedMode && !challengeStarted && (
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 bg-slate-950/95 px-6 text-center backdrop-blur-sm">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.06]">
+                <Clock size={28} className="text-cyan-200" />
+              </div>
+              <div>
+                <p className="text-lg font-semibold text-white">Timed Challenge</p>
+                <p className="mt-1 text-sm text-slate-400">
+                  You have {Math.floor(timedDurationMs / 60000)} minutes to complete this challenge.
+                </p>
+              </div>
+              <button
+                onClick={() => { setChallengeStarted(true); setChallengeTimeLeft(timedDurationMs) }}
+                className="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-50"
+              >
+                Start Challenge
+              </button>
+            </div>
+          )}
+
+          <div className="relative overflow-hidden border-b border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.24),transparent_34%),linear-gradient(135deg,#111827_0%,#020617_72%)] px-5 py-5 sm:px-7">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+              <div className="min-w-0">
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold text-cyan-100 backdrop-blur">
+                    <Code2 size={13} /> {languageName}
+                  </span>
+                  <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${diff.darkBg} ${diff.darkText}`}>
+                    <span className={`h-1.5 w-1.5 rounded-full ${diff.dot}`} />
+                    {diff.label}
+                  </span>
+                  {timedMode && challengeStarted && (
+                    <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-mono font-bold ${challengeTimeLeft < 30000 ? 'border-red-400/30 bg-red-500/10 text-red-200' : 'border-white/10 bg-white/10 text-slate-200'}`}>
+                      <Clock size={12} />
+                      {Math.floor(challengeTimeLeft / 60000)}:{String(Math.floor((challengeTimeLeft % 60000) / 1000)).padStart(2, '0')}
+                    </span>
+                  )}
+                </div>
+                <h3 className="text-xl font-semibold tracking-tight text-white sm:text-2xl">Code Challenge</h3>
+                <p className="mt-1 max-w-2xl text-sm text-slate-400">
+                  Read the prompt, write your solution, then run it against the test suite.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 sm:min-w-[360px]">
+                <div className="rounded-2xl border border-white/10 bg-white/[0.07] p-3 backdrop-blur">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Tests</p>
+                  <p className="mt-1 text-lg font-semibold text-white">{testCases.length}</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.07] p-3 backdrop-blur">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Passed</p>
+                  <p className="mt-1 text-lg font-semibold text-emerald-300">{passedCount}/{totalCount || testCases.length}</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.07] p-3 backdrop-blur">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Score</p>
+                  <p className={`mt-1 text-lg font-semibold ${allPassed ? 'text-emerald-300' : hasRun ? 'text-amber-300' : 'text-white'}`}>{hasRun ? `${scorePercent}%` : '--'}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-0 bg-slate-100 lg:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.85fr)]">
+            <section className="min-w-0 bg-[#141827]">
+              <div className="flex items-center justify-between border-b border-white/[0.07] bg-[#101423] px-4 py-3">
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <div className="flex gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
+                  </div>
+                  <span className="truncate text-xs font-semibold text-slate-300">main</span>
+                </div>
+                <button
+                  onClick={resetCode}
+                  className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-400 transition hover:bg-white/[0.06] hover:text-slate-200"
+                  title="Reset code"
+                >
+                  <RotateCcw size={13} /> Reset
+                </button>
+              </div>
+
+              {additionalFiles.length > 0 && (
+                <div className="flex items-center overflow-x-auto border-b border-white/[0.06] bg-[#161b2b]">
+                  <button
+                    onClick={() => setActiveFileTab('main')}
+                    className={`flex items-center gap-1.5 whitespace-nowrap border-r border-white/[0.06] px-3.5 py-2 text-[11px] font-medium transition-colors ${activeFileTab === 'main' ? 'bg-[#1a1f31] text-slate-100' : 'text-slate-500 hover:bg-white/[0.03] hover:text-slate-300'}`}
+                  >
+                    <Code2 size={12} /> main
+                  </button>
+                  {additionalFiles.map((file, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setActiveFileTab(i)}
+                      className={`flex items-center gap-1.5 whitespace-nowrap border-r border-white/[0.06] px-3.5 py-2 text-[11px] font-medium transition-colors ${activeFileTab === i ? 'bg-[#1a1f31] text-slate-100' : 'text-slate-500 hover:bg-white/[0.03] hover:text-slate-300'}`}
+                    >
+                      <FileText size={12} /> {file.name || `file-${i + 1}`}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div className={`h-[520px] overflow-hidden ${cmClassName}`}>
+                {activeFileTab === 'main' ? (
+                  extensions.length > 0 && (
+                    <CodeMirror
+                      onCreateEditor={(view: any) => { cmViewRef.current = view }}
+                      value={code}
+                      onChange={(val: string) => setCode(val)}
+                      extensions={extensions}
+                      height="100%"
+                      style={{ ...cmStyles, height: '100%' }}
+                      basicSetup={{ lineNumbers: true, foldGutter: false, highlightActiveLine: true, autocompletion: true }}
+                    />
+                  )
+                ) : (
+                  <CodeMirror
+                    value={additionalFiles[activeFileTab as number]?.content || ''}
+                    editable={false}
+                    height="100%"
+                    style={{ ...cmStyles, height: '100%' }}
+                    basicSetup={{ lineNumbers: true, foldGutter: false, highlightActiveLine: true, autocompletion: false }}
+                  />
+                )}
+              </div>
+
+              <div className="border-t border-white/[0.07] bg-[#101423]">
+                {(isRunning || hasRun) && (
+                  <div className="h-1 w-full overflow-hidden bg-white/[0.06]">
+                    <div
+                      className={`h-full ${timerBarColor} transition-all ${isRunning ? 'duration-100' : 'duration-300'}`}
+                      style={{ width: isRunning ? `${timerProgress}%` : `${hasRun ? 100 : 0}%` }}
+                    />
+                  </div>
+                )}
+                <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center">
+                  <button
+                    onClick={runCode}
+                    disabled={learnerRunDisabled}
+                    className={`inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold shadow-lg transition ${learnerRunDisabled ? 'cursor-not-allowed bg-white/[0.06] text-slate-500 shadow-none' : 'bg-cyan-400 text-slate-950 shadow-cyan-950/30 hover:bg-cyan-300'}`}
+                  >
+                    {isRunning ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />}
+                    {isRunning ? 'Running...' : 'Run Code'}
+                  </button>
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                    <span>{typeof navigator !== 'undefined' && navigator.platform?.includes('Mac') ? 'Cmd' : 'Ctrl'}+Enter</span>
+                    {isRunning && <span className="font-mono">{(elapsedMs / 1000).toFixed(1)}s / {(timeLimitMs / 1000).toFixed(0)}s</span>}
+                    {allPassed && !isRunning && <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-300"><CheckCircle2 size={14} /> All passed</span>}
+                    {challengeExpired && <span className="font-semibold text-red-300">Time expired</span>}
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <aside className="flex min-h-[560px] min-w-0 flex-col border-t border-slate-200 bg-white lg:border-l lg:border-t-0">
+              <div className="flex items-center gap-1 overflow-x-auto border-b border-slate-200 bg-slate-50 px-2 py-2">
+                {visibleTabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-xs font-semibold transition ${activeTab === tab.id ? 'bg-slate-950 text-white shadow-sm' : 'text-slate-500 hover:bg-white hover:text-slate-900'}`}
+                  >
+                    {tab.icon}
+                    {tab.label}
+                    {tab.badge && <span>{tab.badge}</span>}
+                  </button>
+                ))}
+              </div>
+              <div className="min-h-0 flex-1 overflow-hidden">
+                {activeTab === 'description' && renderDescriptionTab()}
+                {activeTab === 'tests' && renderTestsTab()}
+                {activeTab === 'output' && renderOutputTab()}
+                {activeTab === 'history' && (
+                  <div className="h-full overflow-y-auto p-5">
+                    <SubmissionHistory
+                      activityUuid={activityUuid}
+                      blockId={blockId}
+                      accessToken={accessToken}
+                      onRestoreCode={(restoredCode) => setCode(restoredCode)}
+                    />
+                  </div>
+                )}
+              </div>
+            </aside>
+          </div>
+        </div>
+      </NodeViewWrapper>
     )
   }
 

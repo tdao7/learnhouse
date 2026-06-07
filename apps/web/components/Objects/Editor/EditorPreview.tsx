@@ -33,6 +33,7 @@ import MagicBlock from './Extensions/MagicBlocks/MagicBlock'
 // Lowlight — slim grammar set; see editorLowlight.ts
 import { lowlight } from './editorLowlight'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
+import MermaidTiptapEnhancer from '@components/Objects/Markdown/MermaidTiptapEnhancer'
 
 interface EditorPreviewProps {
   content: any
@@ -41,6 +42,7 @@ interface EditorPreviewProps {
 
 function EditorPreview({ content, activity }: EditorPreviewProps) {
   const { t } = useTranslation()
+  const previewRef = React.useRef<HTMLDivElement>(null)
 
   const editor = useEditor({
     editable: false,
@@ -158,7 +160,10 @@ function EditorPreview({ content, activity }: EditorPreviewProps) {
   return (
     <EditorOptionsProvider options={{ isEditable: false }}>
       <div className="editor-preview-wrapper">
-        <EditorContent editor={editor} />
+        <div ref={previewRef}>
+          <MermaidTiptapEnhancer containerRef={previewRef} contentKey={content} />
+          <EditorContent editor={editor} />
+        </div>
       </div>
     </EditorOptionsProvider>
   )

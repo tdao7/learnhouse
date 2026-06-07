@@ -2236,3 +2236,38 @@
   display: block;
 }
 
+.mermaid-diagram {
+  width: 100%;
+  overflow-x: auto;
+  margin: 1rem 0;
+  padding: 1rem;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 0.75rem;
+  color: #0f172a;
+}
+
+pre.mermaid-diagram {
+  background: #fff !important;
+  color: #0f172a !important;
+  font-family: inherit !important;
+  font-size: 1rem !important;
+}
+
+.mermaid-diagram svg {
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+  display: block;
+}
+
+.mermaid-diagram-loading {
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.mermaid-diagram-error {
+  background: #fff7ed !important;
+  border-color: #fed7aa;
+  color: #9a3412 !important;
+}

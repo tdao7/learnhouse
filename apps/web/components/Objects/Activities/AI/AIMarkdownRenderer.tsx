@@ -3,6 +3,7 @@ import React from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
+import MermaidDiagram from '@components/Objects/Markdown/MermaidDiagram'
 
 type AIMarkdownRendererProps = {
   content: string
@@ -62,6 +63,11 @@ function AIMarkdownRenderer({ content, isStreaming = false }: AIMarkdownRenderer
           ),
           // Code blocks
           code: ({ className, children, ...props }) => {
+            const language = /language-(\w+)/.exec(className || '')?.[1]
+            if (language === 'mermaid') {
+              return <MermaidDiagram chart={String(children)} />
+            }
+
             const isInline = !className
             if (isInline) {
               return (

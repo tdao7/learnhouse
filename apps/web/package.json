@@ -98,6 +98,7 @@
     "katex": "^0.17.0",
     "lowlight": "^3.3.0",
     "lucide-react": "^1.0.0",
+    "mermaid": "^11.15.0",
     "motion": "^12.34.3",
     "next": "^16.2.6",
     "nextjs-toploader": "^3.9.17",
@@ -133,13 +134,14 @@
     "yup": "^1.7.1"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.1",
     "@tailwindcss/postcss": "^4.1.16",
     "@types/node": "25.9.1",
     "@types/qrcode": "^1.5.6",
     "@types/react": "19.2.15",
     "@types/react-dom": "19.2.3",
     "@types/react-katex": "^3.0.4",
-    "eslint": "^10.0.0",
+    "eslint": "^9.39.1",
     "eslint-config-next": "16.2.6",
     "eslint-plugin-unused-imports": "^4.3.0",
     "postcss": "^8.5.6",

@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useRef } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Youtube from '@tiptap/extension-youtube'
@@ -57,6 +57,7 @@ import TableOfContents from './TableOfContents'
 import { CustomHeading } from './CustomHeadingExtenstion'
 import WebPreview from '@components/Objects/Editor/Extensions/WebPreview/WebPreview'
 import AICanvaToolkit from './AI/AICanvaToolkit'
+import MermaidTiptapEnhancer from '@components/Objects/Markdown/MermaidTiptapEnhancer'
 
 interface Editor {
   content: string
@@ -67,6 +68,7 @@ interface Editor {
 
 
 function Canva(props: Editor) {
+  const canvaRef = useRef<HTMLDivElement>(null)
   /**
    * Important Note : This is a workaround to enable user interaction features to be implemented easily, like text selection, AI features and other planned features, this is set to true but otherwise it should be set to false.
    * Another workaround is implemented below to disable the editor from being edited by the user by setting the caret-color to transparent and using a custom extension to filter out transactions that add/edit/remove text.
@@ -82,7 +84,7 @@ function Canva(props: Editor) {
         ? JSON.parse(props.content)
         : props.content;
       return normalizeMarkTypes(parsed);
-    } catch (e) {
+    } catch {
       return props.content;
     }
   }, [props.content]);
@@ -198,7 +200,8 @@ function Canva(props: Editor) {
     <EditorOptionsProvider options={{ isEditable: false }}>
       <div className="w-full mx-auto">
         <AICanvaToolkit activity={props.activity} editor={editor} />
-        <div className="canva-content-wrapper">
+        <div className="canva-content-wrapper" ref={canvaRef}>
+          <MermaidTiptapEnhancer containerRef={canvaRef} contentKey={normalizedContent} />
           {!props.hideTableOfContents && <TableOfContents editor={editor} />}
           <EditorContent editor={editor} />
         </div>

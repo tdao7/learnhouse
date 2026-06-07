@@ -871,71 +871,83 @@ function TaskCodeObject({ view, assignmentTaskUUID, user_id }: TaskCodeObjectPro
         {/* === STUDENT VIEW === */}
         {view === 'student' && (
           <>
-            {/* Language badge */}
-            <div className="flex items-center space-x-2">
-              <span className="px-2 py-0.5 text-xs font-semibold bg-slate-100 text-slate-600 rounded-full">
-                {selectedLang?.name || 'Unknown'}
-              </span>
-              {/* Hidden-test badge only if the task allows showing the count */}
-              {hiddenTestCount > 0 && contents.show_hidden_test_count !== false && (
-                <span className="px-2 py-0.5 text-xs font-semibold bg-amber-100 text-amber-700 rounded-full">
-                  {hiddenTestCount} hidden test{hiddenTestCount > 1 ? 's' : ''}
-                </span>
-              )}
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <div className="flex flex-col gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3 md:flex-row md:items-center md:justify-between">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-950 px-3 py-1 text-xs font-bold text-white">
+                    <ShieldCheck size={13} />
+                    {selectedLang?.name || 'Unknown'}
+                  </span>
+                  <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+                    {contents.test_cases.filter((tc) => !tc.hidden).length} visible tests
+                  </span>
+                  {hiddenTestCount > 0 && contents.show_hidden_test_count !== false && (
+                    <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
+                      {hiddenTestCount} hidden test{hiddenTestCount > 1 ? 's' : ''}
+                    </span>
+                  )}
+                </div>
+                {contents.allow_student_run !== false && (
+                  <button
+                    onClick={runCode}
+                    disabled={isRunning}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {isRunning ? <Loader2 size={15} className="animate-spin" /> : <Play size={15} />}
+                    <span>{isRunning ? 'Running tests...' : 'Run Tests'}</span>
+                  </button>
+                )}
+              </div>
+
+              <div className="bg-[#111827]">
+                <div className="flex items-center gap-2 border-b border-white/10 px-4 py-2.5">
+                  <div className="flex gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
+                  </div>
+                  <span className="text-xs font-semibold text-slate-400">solution.{selectedLang?.codemirrorLang || 'code'}</span>
+                </div>
+                <div className={`overflow-hidden ${cmClassName}`}>
+                  {cmTheme && (
+                    <CodeMirror
+                      value={code}
+                      onChange={(val) => setCode(val)}
+                      extensions={studentCmExtensions}
+                      theme={cmTheme}
+                      style={cmStyles}
+                      height="360px"
+                      basicSetup={{ lineNumbers: true, foldGutter: false }}
+                    />
+                  )}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2 border-t border-slate-200 bg-white px-4 py-3">
+                {antiPasteEnabled && (
+                  <div className="flex w-fit items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[11px] font-semibold text-amber-700">
+                    <Lock size={12} />
+                    <span>{t('dashboard.assignments.editor.task_editor.general.paste_blocked_hint')}</span>
+                  </div>
+                )}
+                {submissionGatedByPassing && !allVisiblePassing && (
+                  <div className="flex w-fit items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[11px] font-semibold text-amber-700">
+                    <ShieldCheck size={13} />
+                    <span>{t('dashboard.assignments.editor.task_editor.code.must_pass_hint')}</span>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Code Editor */}
-            <div className={`rounded-md overflow-hidden ${cmClassName}`}>
-              {cmTheme && (
-                <CodeMirror
-                  value={code}
-                  onChange={(val) => setCode(val)}
-                  extensions={studentCmExtensions}
-                  theme={cmTheme}
-                  style={cmStyles}
-                  height="300px"
-                  basicSetup={{ lineNumbers: true, foldGutter: false }}
-                />
-              )}
-            </div>
-            {antiPasteEnabled && (
-              <div className="flex items-center space-x-1.5 text-[10px] text-amber-600 bg-amber-50 rounded-md px-2 py-1 w-fit">
-                <span>🔒</span>
-                <span>{t('dashboard.assignments.editor.task_editor.general.paste_blocked_hint')}</span>
-              </div>
-            )}
-
-            {/* Run Button — only if the task allows students to run */}
-            {contents.allow_student_run !== false && (
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={runCode}
-                  disabled={isRunning}
-                  className="flex items-center space-x-1.5 px-3 py-1.5 text-sm font-semibold bg-emerald-600 text-white rounded-md hover:bg-emerald-700 disabled:opacity-50"
-                >
-                  {isRunning ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
-                  <span>{isRunning ? 'Running...' : 'Run Tests'}</span>
-                </button>
-              </div>
-            )}
-
-            {/* Submission gating notice — when the teacher requires passing
-                all visible tests before save. */}
-            {submissionGatedByPassing && !allVisiblePassing && (
-              <div className="flex items-center space-x-1.5 text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2.5 py-1.5 w-fit">
-                <ShieldCheck size={13} />
-                <span>{t('dashboard.assignments.editor.task_editor.code.must_pass_hint')}</span>
-              </div>
-            )}
-
-            {/* Results */}
             {showResults && (
-              <TestResultsPanel
-                results={results}
-                testCases={contents.test_cases}
-                view="student"
-                showDetailsOnFail={contents.show_test_details_on_fail !== false}
-              />
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <TestResultsPanel
+                  results={results}
+                  testCases={contents.test_cases}
+                  view="student"
+                  showDetailsOnFail={contents.show_test_details_on_fail !== false}
+                />
+              </div>
             )}
 
             {/* Reference solution — revealed after a saved submission when
@@ -1158,7 +1170,7 @@ function CodeOptionToggle({
   label: string
   description: string
   checked: boolean
-  onChange: (next: boolean) => void
+  onChange: React.Dispatch<boolean>
 }) {
   return (
     <div className="flex items-start justify-between gap-2 p-2 rounded-md bg-white border border-slate-200">
