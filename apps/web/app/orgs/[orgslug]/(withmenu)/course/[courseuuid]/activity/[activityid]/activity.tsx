@@ -752,56 +752,57 @@ function ActivityClient(props: ActivityClientProps) {
                     trailData={trailData}
                   />
                 ) : (
-                  <div className="space-y-4 pt-0 relative">
-                    <div className="pt-2 pb-3 sm:pb-6">
-                      <Breadcrumbs items={[
-                        { label: t('courses.courses'), href: getUriWithOrg(orgslug, '/courses'), icon: <BookCopy size={14} /> },
-                        { label: course.name, href: getUriWithOrg(orgslug, `/course/${courseuuid}`) },
-                        { label: displayName }
-                      ]} />
-                    </div>
-                    <div className="space-y-3 sm:space-y-4 activity-info-section relative" style={{ zIndex: 'var(--z-content)' }}>
-                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-                          <div className="flex space-x-4 sm:space-x-6 items-center">
-                            <div className="flex shrink-0">
-                              <Link
-                                href={getUriWithOrg(orgslug, '') + `/course/${courseuuid}`}
-                              >
-                                <img
-                                  className="w-[60px] h-[34px] sm:w-[100px] sm:h-[57px] rounded-md drop-shadow-md"
-                                  src={course.thumbnail_image
-                                    ? getCourseThumbnailMediaDirectory(
-                                        org?.org_uuid,
-                                        course.course_uuid,
-                                        course.thumbnail_image
-                                      )
-                                    : '/empty_thumbnail.png'
-                                  }
-                                  alt=""
-                                />
-                              </Link>
-                            </div>
-                            <div className="flex flex-col -space-y-1">
-                              <p className="font-bold text-gray-700 text-xs sm:text-md">{t('search.course')} </p>
-                              <h1 className="font-bold text-gray-950 text-lg sm:text-3xl first-letter:uppercase">
-                                {course.name}
-                              </h1>
-                            </div>
+                  <div className="space-y-6 pt-0 relative">
+                    {/* Unified Premium Header Block */}
+                    <div className="bg-white border border-neutral-200/80 rounded-xl p-4 sm:p-5 shadow-sm space-y-4" style={{ zIndex: 'var(--z-content)' }}>
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div className="flex flex-col min-w-0">
+                          {/* Course name and Chapter details */}
+                          <div className="flex items-center space-x-2 text-xs text-neutral-500 font-medium">
+                            <Link href={getUriWithOrg(orgslug, `/course/${courseuuid}`)} className="hover:text-emerald-600 transition-colors">
+                              {course.name}
+                            </Link>
+                            <span>•</span>
+                            <span>{getChapterNameByActivityId(course, activity?.id) ?? chapterNameFromCourse}</span>
                           </div>
+                          {/* Activity title */}
+                          <h1 className="text-xl sm:text-2xl font-extrabold text-neutral-900 mt-1 leading-tight first-letter:uppercase truncate">
+                            {displayName}
+                          </h1>
+                        </div>
+                        
+                        {/* Action Buttons */}
+                        <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0" style={{ zIndex: 'var(--z-interactive)' }}>
                           {activity && (
-                            <div className="hidden sm:block">
-                              <ActivityShareDropdown
-                                activityName={activity.name}
-                                activityUrl={typeof window !== 'undefined' ? window.location.href : ''}
-                                orgslug={orgslug}
-                                courseUuid={course.course_uuid}
-                                activityId={activity.activity_uuid ? activity.activity_uuid.replace('activity_', '') : activityid.replace('activity_', '')}
-                                activityType={activity.activity_type}
-                              />
-                            </div>
+                            <ActivityShareDropdown
+                              activityName={activity.name}
+                              activityUrl={typeof window !== 'undefined' ? window.location.href : ''}
+                              orgslug={orgslug}
+                              courseUuid={course.course_uuid}
+                              activityId={activity.activity_uuid ? activity.activity_uuid.replace('activity_', '') : activityid.replace('activity_', '')}
+                              activityType={activity.activity_type}
+                            />
+                          )}
+                          <ActivityChapterDropdown
+                            course={course}
+                            currentActivityId={activity ? (activity.activity_uuid ? activity.activity_uuid.replace('activity_', '') : activityid.replace('activity_', '')) : activityid.replace('activity_', '')}
+                            orgslug={orgslug}
+                            trailData={trailData}
+                          />
+                          {contributorStatus === 'ACTIVE' && activity?.activity_type == 'TYPE_DYNAMIC' && (
+                            <Link
+                              href={getUriWithOrg(orgslug, '') + `/course/${courseuuid}/activity/${activityid}/edit`}
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg px-4 py-2 flex items-center space-x-1.5 transition-colors text-xs font-bold shadow-sm cursor-pointer"
+                            >
+                              <Edit2 size={14} />
+                              <span>{t('courses.contribute')}</span>
+                            </Link>
                           )}
                         </div>
+                      </div>
 
+                      {/* Horizontal progress bar / timeline indicator */}
+                      <div className="border-t border-neutral-100 pt-3">
                         <ActivityIndicators
                           course_uuid={courseuuid}
                           current_activity={activityid}
@@ -810,160 +811,101 @@ function ActivityClient(props: ActivityClientProps) {
                           enableNavigation={true}
                           trailData={trailData}
                         />
+                      </div>
+                    </div>
 
-                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center w-full gap-3">
-                          <div className="flex flex-1 items-center space-x-3 min-w-0">
-                            <div className="flex flex-col -space-y-1 min-w-0">
-                              <p className="font-bold text-gray-700 text-xs sm:text-md">
-                                {getChapterNameByActivityId(course, activity?.id) ?? chapterNameFromCourse}
-                              </p>
-                              <h1 className="font-bold text-gray-950 text-base sm:text-2xl first-letter:uppercase">
-                                {displayName}
-                              </h1>
-                              {/* Authors and Dates Section */}
-                              <div className="flex flex-wrap items-center gap-3 mt-2">
-                                {/* Avatars */}
-                                {course.authors && course.authors.length > 0 && (
-                                  <div className="flex -space-x-3">
-                                    {course.authors.filter((a: any) => a.authorship_status === 'ACTIVE').slice(0, 3).map((author: any, idx: number) => (
-                                      <div key={author.user.user_uuid} className="relative" style={{ zIndex: 10 - idx }}>
-                                        <UserAvatar
-                                          border="border-2"
-                                          rounded="rounded-full"
-                                          avatar_url={author.user.avatar_image ? getUserAvatarMediaDirectory(author.user.user_uuid, author.user.avatar_image) : ''}
-                                          predefined_avatar={author.user.avatar_image ? undefined : 'empty'}
-                                          width={26}
-                                          showProfilePopup={true}
-                                          userId={author.user.id}
-                                        />
-                                      </div>
-                                    ))}
-                                    {course.authors.filter((a: any) => a.authorship_status === 'ACTIVE').length > 3 && (
-                                      <div className="flex items-center justify-center bg-neutral-100 text-neutral-600 font-medium rounded-full border-2 border-white shadow-sm w-9 h-9 text-xs z-0">
-                                        +{course.authors.filter((a: any) => a.authorship_status === 'ACTIVE').length - 3}
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-                                {/* Author names */}
-                                {course.authors && course.authors.length > 0 && (
-                                  <div className="text-xs text-gray-700 font-medium flex items-center gap-1">
-                                    {course.authors.filter((a: any) => a.authorship_status === 'ACTIVE').length > 1 && (
-                                      <span>{t('courses.co_created_by')} </span>
-                                    )}
-                                    {course.authors.filter((a: any) => a.authorship_status === 'ACTIVE').slice(0, 2).map((author: any, idx: number, arr: any[]) => (
-                                      <span key={author.user.user_uuid}>
-                                        {author.user.first_name && author.user.last_name
-                                          ? `${author.user.first_name} ${author.user.last_name}`
-                                          : `@${author.user.username}`}
-                                        {idx === 0 && arr.length > 1 ? ' & ' : ''}
-                                      </span>
-                                    ))}
-                                    {course.authors.filter((a: any) => a.authorship_status === 'ACTIVE').length > 2 && (
-                                      <ToolTip
-                                        content={
-                                          <div className="p-2">
-                                            {course.authors
-                                              .filter((a: any) => a.authorship_status === 'ACTIVE')
-                                              .slice(2)
-                                              .map((author: any) => (
-                                                <div key={author.user.user_uuid} className="text-white text-sm py-1">
-                                                  {author.user.first_name && author.user.last_name
-                                                    ? `${author.user.first_name} ${author.user.last_name}`
-                                                    : `@${author.user.username}`}
-                                                </div>
-                                              ))}
-                                          </div>
-                                        }
-                                      >
-                                        <div className="bg-gray-100 hover:bg-gray-200 text-gray-600 px-2 py-0.5 rounded-md cursor-pointer text-xs font-medium transition-colors duration-200">
-                                          +{course.authors.filter((a: any) => a.authorship_status === 'ACTIVE').length - 2}
+                    {activityLoading || !activity ? (
+                      <ActivityContentSkeleton activityType={displayActivityType} />
+                    ) : activity.published == false ? (
+                      <div className="p-7 rounded-lg bg-gray-800">
+                        <div className="text-white">
+                          <h1 className="font-bold text-2xl">
+                            {t('activities.not_published_yet')}
+                          </h1>
+                        </div>
+                      </div>
+                    ) : activity.published == true ? (
+                      <>
+                        {activity.content.paid_access == false ? (
+                          <PaidCourseActivityDisclaimer course={course} />
+                        ) : (
+                          <div className="flex gap-6">
+                            <div className={`flex-1 min-w-0 ${activity.activity_type === 'TYPE_SCORM' ? 'rounded-xl overflow-hidden' : 'p-4 sm:p-7 rounded-xl'} ${bgColor} border border-neutral-200/60 shadow-sm relative isolate`} style={{ zIndex: 'var(--z-base)' }}>
+                              
+                              {/* Fullscreen Button */}
+                              <button
+                                onClick={() => setIsFocusMode(true)}
+                                className={`absolute ${activity.activity_type === 'TYPE_SCORM' ? 'top-2 right-2' : 'top-4 right-4'} hidden sm:flex bg-white/80 hover:bg-white nice-shadow p-2 rounded-full cursor-pointer transition-all duration-200 group overflow-hidden pointer-events-auto`}
+                                style={{ zIndex: 'var(--z-interactive)' }}
+                                title={t('activities.focus_mode')}
+                              >
+                                <div className="flex items-center">
+                                  <Maximize2 size={16} className="text-gray-700" />
+                                  <span className="text-xs font-bold text-gray-700 opacity-0 group-hover:opacity-100 transition-all duration-200 w-0 group-hover:w-auto group-hover:ml-2 whitespace-nowrap">
+                                    {t('activities.focus_mode')}
+                                  </span>
+                                </div>
+                              </button>
+
+                              {/* Editorial Metadata block at the top of content */}
+                              {activity.activity_type !== 'TYPE_SCORM' && (
+                                <div className="flex flex-wrap items-center gap-3 pb-5 mb-5 border-b border-neutral-100 text-xs text-neutral-500 font-medium select-none">
+                                  {/* Avatars */}
+                                  {course.authors && course.authors.length > 0 && (
+                                    <div className="flex -space-x-2.5">
+                                      {course.authors.filter((a: any) => a.authorship_status === 'ACTIVE').slice(0, 3).map((author: any, idx: number) => (
+                                        <div key={author.user.user_uuid} className="relative ring-2 ring-white rounded-full overflow-hidden" style={{ zIndex: 10 - idx }}>
+                                          <UserAvatar
+                                            border="border-0"
+                                            rounded="rounded-full"
+                                            avatar_url={author.user.avatar_image ? getUserAvatarMediaDirectory(author.user.user_uuid, author.user.avatar_image) : ''}
+                                            predefined_avatar={author.user.avatar_image ? undefined : 'empty'}
+                                            width={24}
+                                            showProfilePopup={true}
+                                            userId={author.user.id}
+                                          />
                                         </div>
-                                      </ToolTip>
-                                    )}
-                                  </div>
-                                )}
-                                {/* Dates */}
-                                <div className="flex flex-wrap items-center text-xs text-gray-500 gap-1 sm:gap-2">
+                                      ))}
+                                    </div>
+                                  )}
+                                  
+                                  {/* Author names */}
+                                  {course.authors && course.authors.length > 0 && (
+                                    <div className="text-neutral-700 font-semibold flex items-center gap-1">
+                                      {course.authors.filter((a: any) => a.authorship_status === 'ACTIVE').length > 1 && (
+                                        <span className="text-neutral-400 font-normal">{t('courses.co_created_by')} </span>
+                                      )}
+                                      {course.authors.filter((a: any) => a.authorship_status === 'ACTIVE').slice(0, 2).map((author: any, idx: number, arr: any[]) => (
+                                        <span key={author.user.user_uuid}>
+                                          {author.user.first_name && author.user.last_name
+                                            ? `${author.user.first_name} ${author.user.last_name}`
+                                            : `@${author.user.username}`}
+                                          {idx === 0 && arr.length > 1 ? ' & ' : ''}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
+                                  
+                                  <span className="text-neutral-300">•</span>
                                   <span>
                                     {t('courses.created_on')} {new Date(course.creation_date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
                                   </span>
-                                  <span className="mx-1">•</span>
+                                  <span className="text-neutral-300">•</span>
                                   <span>
                                     {t('courses.last_updated')} {getRelativeTime(new Date(course.updated_at || course.last_updated || course.creation_date))}
                                   </span>
                                 </div>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="hidden sm:flex space-x-2 items-center relative shrink-0" style={{ zIndex: 'var(--z-interactive)' }}>
-                            {activity && activity.published == true && activity.content.paid_access != false && (
-                              <AuthenticatedClientElement checkMethod="authentication">
-                                {activity.activity_type != 'TYPE_ASSIGNMENT' && (
-                                  <>
-                                    <AIActivityAsk activity={activity} />
-                                    <ActivityChapterDropdown
-                                      course={course}
-                                      currentActivityId={activity.activity_uuid ? activity.activity_uuid.replace('activity_', '') : activityid.replace('activity_', '')}
-                                      orgslug={orgslug}
-                                      trailData={trailData}
-                                    />
-                                    {contributorStatus === 'ACTIVE' && activity.activity_type == 'TYPE_DYNAMIC' && (
-                                      <Link
-                                        href={getUriWithOrg(orgslug, '') + `/course/${courseuuid}/activity/${activityid}/edit`}
-                                        className="bg-emerald-600 rounded-full px-5 drop-shadow-md flex items-center space-x-2 p-2.5 text-white hover:cursor-pointer transition delay-150 duration-300 ease-in-out"
-                                      >
-                                        <Edit2 size={17} />
-                                        <span className="text-xs font-bold">{t('courses.contribute')}</span>
-                                      </Link>
-                                    )}
-                                  </>
-                                )}
-                              </AuthenticatedClientElement>
-                            )}
-                          </div>
-                        </div>
-                      </div>
+                              )}
 
-                      {activityLoading || !activity ? (
-                        <ActivityContentSkeleton activityType={displayActivityType} />
-                      ) : activity.published == false ? (
-                        <div className="p-7 rounded-lg bg-gray-800">
-                          <div className="text-white">
-                            <h1 className="font-bold text-2xl">
-                              {t('activities.not_published_yet')}
-                            </h1>
-                          </div>
-                        </div>
-                      ) : activity.published == true ? (
-                        <>
-                          {activity.content.paid_access == false ? (
-                            <PaidCourseActivityDisclaimer course={course} />
-                          ) : (
-                            <div className="flex gap-6">
-                              <div className={`flex-1 min-w-0 ${activity.activity_type === 'TYPE_SCORM' ? 'rounded-xl overflow-hidden' : 'p-3 sm:p-7 rounded-lg'} ${bgColor} relative isolate`} style={{ zIndex: 'var(--z-base)' }}>
-                                <button
-                                  onClick={() => setIsFocusMode(true)}
-                                  className={`absolute ${activity.activity_type === 'TYPE_SCORM' ? 'top-2 right-2' : 'top-4 right-4'} hidden sm:flex bg-white/80 hover:bg-white nice-shadow p-2 rounded-full cursor-pointer transition-all duration-200 group overflow-hidden pointer-events-auto`}
-                                  style={{ zIndex: 'var(--z-interactive)' }}
-                                  title={t('activities.focus_mode')}
-                                >
-                                  <div className="flex items-center">
-                                    <Maximize2 size={16} className="text-gray-700" />
-                                    <span className="text-xs font-bold text-gray-700 opacity-0 group-hover:opacity-100 transition-all duration-200 w-0 group-hover:w-auto group-hover:ml-2 whitespace-nowrap">
-                                      {t('activities.focus_mode')}
-                                    </span>
-                                  </div>
-                                </button>
-                                {activityContent}
-                              </div>
-                              <Suspense fallback={null}>
-                                <AISidePanelInline activity={activity} />
-                              </Suspense>
+                              {activityContent}
                             </div>
-                          )}
-                        </>
-                      ) : null}
+                            <Suspense fallback={null}>
+                              <AISidePanelInline activity={activity} />
+                            </Suspense>
+                          </div>
+                        )}
+                      </>
+                    ) : null}
 
                       {/* Activity Actions below the content box */}
                       {activity && activity.published == true && activity.content.paid_access != false && (

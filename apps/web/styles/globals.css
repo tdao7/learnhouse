@@ -1942,32 +1942,48 @@
 
 .canva-content-wrapper {
   display: flex;
+  flex-direction: column;
   width: 100%;
   height: 100%;
+  gap: 1.5rem;
 }
 
-.canva-content-wrapper > div:first-child {
-  width: 20%;
-  padding-right: 1rem;
+@media (min-width: 768px) {
+  .canva-content-wrapper {
+    flex-direction: row;
+    gap: 2rem;
+  }
+  
+  .canva-content-wrapper > div:first-child {
+    width: 22%;
+    padding-right: 1.5rem;
+  }
+
+  .canva-content-wrapper > div:last-child {
+    width: 78%;
+  }
+  
+  .canva-content-wrapper:has(> div:first-child:not(:last-child)) > div:first-child {
+    width: 22%;
+    padding-right: 1.5rem;
+  }
+
+  .canva-content-wrapper:has(> div:first-child:not(:last-child)) > div:last-child {
+    width: 78%;
+  }
 }
 
-.canva-content-wrapper > div:last-child {
-  width: 80%;
+@media (max-width: 767px) {
+  .canva-content-wrapper > div:first-child {
+    width: 100%;
+    padding-right: 0;
+  }
+
+  .canva-content-wrapper > div:last-child {
+    width: 100%;
+  }
 }
 
-.canva-content-wrapper:has(> div:first-child:not(:last-child)) > div:first-child {
-  width: 20%;
-  padding-right: 1rem;
-}
-
-.canva-content-wrapper:has(> div:first-child:not(:last-child)) > div:last-child {
-  width: 80%;
-}
-
-.canva-content-wrapper:has(> div:first-child:last-child) > div:first-child {
-  width: 100%;
-  padding-right: 0;
-}
 
 .canva-content-wrapper .ProseMirror {
   flex: 1;
