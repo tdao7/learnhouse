@@ -10,7 +10,7 @@ import GeneralWrapperStyled from '@components/Objects/StyledElements/Wrappers/Ge
 import {
   getCourseThumbnailMediaDirectory,
 } from '@services/media/media'
-import { ArrowRight, Backpack, Check, File, StickyNote, Video, Square, Image as ImageIcon, Layers, BookCopy, Lock } from 'lucide-react'
+import { ArrowRight, Backpack, Check, File, StickyNote, Video, Square, Image as ImageIcon, Layers, BookCopy, Lock, PlayCircle, FileText, BookOpen, Code2, CheckCircle2 } from 'lucide-react'
 import { useOrg } from '@components/Contexts/OrgContext'
 import { CourseProvider } from '@components/Contexts/CourseContext'
 import { useMediaQuery } from 'usehooks-ts'
@@ -494,38 +494,35 @@ const CourseClient = (props: any) => {
               return (
                 <div className="w-full">
                   <h2 className="py-5 text-xl md:text-2xl font-bold">{t('courses.what_you_will_learn')}</h2>
-                  <div className="bg-white shadow-md shadow-gray-300/25 outline outline-1 outline-neutral-200/40 rounded-lg overflow-hidden px-5 py-5 space-y-2">
-                    {displayLearnings.map((learning: any) => {
-                      const learningText = typeof learning === 'string' ? learning : learning.text
-                      const learningEmoji = typeof learning === 'string' ? null : learning.emoji
-                      const learningId = typeof learning === 'string' ? learning : learning.id || learning.text
-                      return (
-                        <div
-                          key={learningId}
-                          className="flex space-x-2 items-center font-semibold text-gray-500"
-                        >
-                          <div className="px-2 py-2 rounded-full">
-                            {learningEmoji ? (
-                              <span>{learningEmoji}</span>
-                            ) : (
-                              <Check className="text-gray-400" size={15} />
-                            )}
+                  <div className="bg-white border border-neutral-200/80 rounded-lg px-6 py-6 shadow-sm">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3.5">
+                      {displayLearnings.map((learning: any) => {
+                        const learningText = typeof learning === 'string' ? learning : learning.text
+                        const learningId = typeof learning === 'string' ? learning : learning.id || learning.text
+                        return (
+                          <div
+                            key={learningId}
+                            className="flex items-start space-x-3 text-[14px] leading-relaxed text-neutral-700 font-normal"
+                          >
+                            <Check className="text-neutral-500 flex-shrink-0 w-4 h-4 mt-0.5" />
+                            <div className="flex-1">
+                              <span>{learningText}</span>
+                              {learning.link && (
+                                <a
+                                  href={learning.link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center text-blue-500 hover:underline text-xs ml-1.5 align-middle"
+                                >
+                                  <span className="sr-only">Link to {learningText}</span>
+                                  <ArrowRight size={10} />
+                                </a>
+                              )}
+                            </div>
                           </div>
-                          <p>{learningText}</p>
-                          {learning.link && (
-                            <a
-                              href={learning.link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-500 hover:underline text-sm"
-                            >
-                              <span className="sr-only">Link to {learningText}</span>
-                              <ArrowRight size={14} />
-                            </a>
-                          )}
-                        </div>
-                      )
-                    })}
+                        )
+                      })}
+                    </div>
                   </div>
                 </div>
               )
@@ -578,60 +575,48 @@ const CourseClient = (props: any) => {
                         </div>
                       </div>
                       <div className={`transition-all duration-200 ${isExpanded ? 'block' : 'hidden'}`}>
-                        <div className="">
+                        <div className="divide-y divide-neutral-100 bg-white">
                           {chapter.activities.map((activity: any) => {
                             const locked = !!activity.is_locked
                             const RowInner = (
-                              <div className="flex space-x-3 items-center">
-                                <div className="flex items-center">
-                                  {locked ? (
-                                    <div className="text-rose-400">
-                                      <Lock size={14} className="stroke-[2]" />
-                                    </div>
-                                  ) : isActivityDone(activity) ? (
-                                    <div className="relative cursor-pointer">
-                                      <Square size={16} className="stroke-[2] text-teal-600" />
-                                      <Check size={16} className="stroke-[2.5] text-teal-600 absolute top-0 left-0" />
-                                    </div>
-                                  ) : (
-                                    <div className="text-neutral-300 cursor-pointer">
-                                      <Square size={16} className="stroke-[2]" />
-                                    </div>
-                                  )}
-                                </div>
-                                <div className="flex flex-col grow">
-                                  <div className="flex items-center space-x-2 w-full">
-                                    <p className={`font-semibold transition-colors ${locked ? 'text-neutral-400' : 'text-neutral-600 group-hover:text-neutral-800'}`}>{activity.name}</p>
-                                    {locked && (
-                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-50 border border-rose-200 text-rose-600 text-[10px] font-semibold">
-                                        <Lock size={10} />
-                                        {t('course.locked', 'Locked')}
+                              <div className="flex space-x-4 items-center justify-between w-full py-1">
+                                <div className="flex items-center space-x-3.5 min-w-0">
+                                  <div className="flex items-center justify-center w-5 h-5 flex-shrink-0">
+                                    {locked ? (
+                                      <Lock size={15} className="text-neutral-400" />
+                                    ) : isActivityDone(activity) ? (
+                                      <CheckCircle2 size={16} className="text-teal-600" />
+                                    ) : activity.activity_type === 'TYPE_VIDEO' ? (
+                                      <PlayCircle size={16} className="text-neutral-500" />
+                                    ) : activity.activity_type === 'TYPE_DOCUMENT' ? (
+                                      <FileText size={16} className="text-neutral-500" />
+                                    ) : activity.activity_type === 'TYPE_ASSIGNMENT' ? (
+                                      <Code2 size={16} className="text-indigo-600 stroke-[2.5]" />
+                                    ) : (
+                                      <BookOpen size={16} className="text-neutral-500" />
+                                    )}
+                                  </div>
+                                  <div className="flex items-center flex-wrap gap-2 min-w-0">
+                                    <span className={`text-[14px] font-medium transition-colors leading-normal truncate ${locked ? 'text-neutral-400' : 'text-neutral-700 group-hover:text-neutral-900'}`}>
+                                      {activity.name}
+                                    </span>
+                                    {activity.activity_type === 'TYPE_ASSIGNMENT' && (
+                                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/60 flex-shrink-0">
+                                        Bài tập
                                       </span>
                                     )}
                                     {!locked && isActivityCurrent(activity) && (
-                                      <div className="flex items-center space-x-1 text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full text-xs font-semibold animate-pulse">
-                                        <span>{t('activities.current')}</span>
-                                      </div>
+                                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-600 animate-pulse flex-shrink-0">
+                                        {t('activities.current')}
+                                      </span>
                                     )}
-                                  </div>
-                                  <div className="flex items-center space-x-1.5 mt-0.5 text-neutral-400">
-                                    {activity.activity_type === 'TYPE_DYNAMIC' && (
-                                      <StickyNote size={10} />
-                                    )}
-                                    {activity.activity_type === 'TYPE_VIDEO' && (
-                                      <Video size={10} />
-                                    )}
-                                    {activity.activity_type === 'TYPE_DOCUMENT' && (
-                                      <File size={10} />
-                                    )}
-                                    {activity.activity_type === 'TYPE_ASSIGNMENT' && (
-                                      <Backpack size={10} />
-                                    )}
-                                    <span className="text-xs font-medium">{getActivityTypeLabel(activity.activity_type)}</span>
                                   </div>
                                 </div>
-                                <div className={`transition-colors ${locked ? 'text-neutral-200' : 'text-neutral-300 group-hover:text-neutral-400 cursor-pointer'}`}>
-                                  <ArrowRight size={14} />
+                                <div className="flex items-center space-x-3 flex-shrink-0">
+                                  <span className="text-[12px] text-neutral-400 font-normal">
+                                    {getActivityTypeLabel(activity.activity_type)}
+                                  </span>
+                                  <ArrowRight size={14} className={`transition-transform duration-200 group-hover:translate-x-0.5 ${locked ? 'text-neutral-300' : 'text-neutral-400 group-hover:text-neutral-600'}`} />
                                 </div>
                               </div>
                             )
@@ -640,7 +625,7 @@ const CourseClient = (props: any) => {
                               return (
                                 <div
                                   key={activity.activity_uuid}
-                                  className="block activity-container px-4 py-4 cursor-not-allowed select-none"
+                                  className="block activity-container px-5 py-3.5 cursor-not-allowed select-none bg-white border-b border-neutral-100 last:border-b-0"
                                   title={t('course.activity_locked_hint', 'Sign in or join the right user group to unlock this.')}
                                 >
                                   {RowInner}
@@ -657,7 +642,7 @@ const CourseClient = (props: any) => {
                                 }
                                 rel="noopener noreferrer"
                                 prefetch={false}
-                                className="block group activity-container transition-all duration-200 px-4 py-4"
+                                className="block group activity-container transition-all duration-150 ease-in-out px-5 py-3.5 bg-white hover:bg-neutral-50/60 border-b border-neutral-100 last:border-b-0"
                                 onMouseEnter={() => handleActivityMouseEnter(activity)}
                               >
                                 {RowInner}
