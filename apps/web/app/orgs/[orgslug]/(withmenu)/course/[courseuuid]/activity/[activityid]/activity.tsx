@@ -856,7 +856,6 @@ function ActivityClient(props: ActivityClientProps) {
                                       {course.authors.filter((a: any) => a.authorship_status === 'ACTIVE').slice(0, 3).map((author: any, idx: number) => (
                                         <div key={author.user.user_uuid} className="relative ring-2 ring-white rounded-full overflow-hidden" style={{ zIndex: 10 - idx }}>
                                           <UserAvatar
-                                            border="border-0"
                                             rounded="rounded-full"
                                             avatar_url={author.user.avatar_image ? getUserAvatarMediaDirectory(author.user.user_uuid, author.user.avatar_image) : ''}
                                             predefined_avatar={author.user.avatar_image ? undefined : 'empty'}
